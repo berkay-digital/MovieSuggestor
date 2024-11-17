@@ -8,6 +8,7 @@ public / private project?
 
 
 project's main goal?
+movie sugestor
 
 
 tech stack?
