@@ -1,4 +1,6 @@
 # Movie Suggestor Web App - TODO
+ dont forget to pip install -r requirements.txt
+ I added some new modules.
 
 ## Backend Development
 - [ ] Set up Flask application structure
