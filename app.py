@@ -31,7 +31,6 @@ def get_id_by_title(tmdb: TMDb, title: str, media_type: str = 'movie'):
         else:
             results = tmdb.search().tv(query=title)
 
-        # Get first result if any exists
         if results and len(results) > 0:
             return results[0].id
         return None
@@ -92,6 +91,58 @@ def get_tv_details(tmdb: TMDb, tv_id: int):
     except Exception as e:
         print(f"Error fetching TV series details: {e}")
         return {}
+
+
+def get_genre_id(tmdb: TMDb, genre_name: str, media_type: str = 'movie'):
+    """
+    function fpr for getting genre id as its required for api
+    returns genere id of movie or series
+    """
+    try:
+        if media_type == 'movie':
+            genres = tmdb.genres().movie()
+        else:
+            genres = tmdb.genres().tv()
+
+        for genre in genres:
+            if genre.name.lower() == genre_name.lower():
+                return genre.id
+        return None
+
+    except Exception as e:
+        print(f"Error getting genre ID: {e}")
+        return None
+
+
+def get_popular_by_genre( tmdb: TMDb, genre_name: str, media_type: str = 'movie'):
+    """
+    functin for getting popular movies or series by genre
+    """
+    try:
+        genre_id = get_genre_id(tmdb, genre_name, media_type)
+        if not genre_id:
+            print(f"Genre '{genre_name}' not found")
+            return []
+
+        params = {
+            'sort_by': 'popularity.desc',
+            'with_genres': genre_id,
+            'include_adult': True,
+            'page': 1
+        }
+
+
+        # Get results
+        if media_type == 'movie':
+            results = tmdb.discover().movie(**params)
+        else:
+            results = tmdb.discover().tv(**params)
+
+        return results
+
+    except Exception as e:
+        print(f"Error getting popular {media_type} in {genre_name}: {e}")
+        return []
 
 
 if __name__ == '__main__':
