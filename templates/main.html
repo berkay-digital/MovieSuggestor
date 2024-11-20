@@ -13,11 +13,13 @@
             background: linear-gradient(135deg, #1a0b2e, #4a2068, #7b3fa3);
             color: #fff;
             min-height: 100vh;
+            font-family: 'Raleway', sans-serif;
+            overflow-y: auto;
+            padding-bottom: 80px;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Raleway', sans-serif;
-            overflow: hidden;
         }
 
         #particles-js {
@@ -32,7 +34,7 @@
         .search-container {
             max-width: 600px;
             width: 90%;
-            margin: 20px;
+            margin: 0 auto;
             padding: 2rem;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -40,6 +42,14 @@
             box-shadow: 0 8px 32px 0 rgba(74, 32, 104, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1;
+            transform: translateY(-2.5vh);
+        }
+
+        @media (max-height: 800px) {
+            .search-container {
+                margin: 100px auto;
+                transform: none;
+            }
         }
 
         h1 {
@@ -202,6 +212,8 @@
             text-align: center;
             z-index: 1;
             font-size: 0.9rem;
+            background: rgba(26, 11, 46, 0.8);
+            backdrop-filter: blur(10px);
         }
 
         .footer a {
@@ -382,6 +394,135 @@
             height: 20px;
             fill: currentColor;
         }
+
+        .results-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding-right: 10px;
+        }
+
+        .results-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .results-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .results-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .results-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .list-group-item {
+            margin-bottom: 10px;
+            border-radius: 15px !important;
+            backdrop-filter: blur(10px);
+        }
+
+        .list-group-item:hover {
+            transform: translateY(-2px);
+            transition: transform 0.3s ease;
+        }
+
+        .loading-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .loading-bar {
+            height: 4px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-bar::after {
+            content: '';
+            display: block;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(45deg, #f6d365, #fda085);
+            animation: loading 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                width: 0;
+                margin-left: 0;
+            }
+            50% {
+                width: 100%;
+                margin-left: 0;
+            }
+            100% {
+                width: 0;
+                margin-left: 100%;
+            }
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #f6d365;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .rating-badge {
+            background: linear-gradient(45deg, #f6d365, #fda085);
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .popularity-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -436,6 +577,18 @@
                 </button>
             </div>
         </form>
+
+        <div class="loading-container" id="loading">
+            <div class="loading-bar"></div>
+        </div>
+
+        <div id="results" class="mt-4" style="display: none;">
+            <h3 class="text-white mb-3">Recommendations</h3>
+            <div class="results-container">
+                <div id="results-list" class="list-group">
+                </div>
+            </div>
+        </div>
     </div>
 
     <footer class="footer">
@@ -453,6 +606,9 @@
             const categoryButtons = document.querySelectorAll('.category-btn');
             const searchForm = document.getElementById('search-form');
             const searchInput = document.getElementById('search-input');
+            const resultsDiv = document.getElementById('results');
+            const resultsList = document.getElementById('results-list');
+            const loadingDiv = document.getElementById('loading');
             let currentCategory = 'movie';
 
             categoryButtons.forEach(button => {
@@ -463,12 +619,74 @@
                 });
             });
 
-            searchForm.addEventListener('submit', function(e) {
+            searchForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const query = searchInput.value.trim();
+                
                 if (query) {
-                    console.log(`Searching for "${query}" in category: ${currentCategory}`);
-                    // Implement your search logic here
+                    try {
+                        // Show loading animation
+                        loadingDiv.style.display = 'block';
+                        resultsDiv.style.display = 'none';
+                        
+                        const response = await fetch('/search', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                query: query,
+                                category: currentCategory
+                            })
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            resultsList.innerHTML = '';
+                            data.results.forEach(movie => {
+                                const movieElement = document.createElement('div');
+                                movieElement.className = 'result-card';
+                                movieElement.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="result-title">${movie.title}</h5>
+                                        <span class="rating-badge">
+                                            <svg class="stat-icon" viewBox="0 0 24 24">
+                                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                                            </svg>
+                                            ${movie.rating.toFixed(1)}
+                                        </span>
+                                    </div>
+                                    <div class="result-stats">
+                                        <span class="popularity-badge">
+                                            <svg class="stat-icon" viewBox="0 0 24 24">
+                                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                                            </svg>
+                                            Popularity: ${Math.round(movie.popularity)}
+                                        </span>
+                                    </div>
+                                `;
+                                resultsList.appendChild(movieElement);
+                            });
+                        } else {
+                            resultsList.innerHTML = `
+                                <div class="result-card">
+                                    <div class="alert alert-warning m-0">No recommendations found</div>
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        resultsList.innerHTML = `
+                            <div class="result-card">
+                                <div class="alert alert-danger m-0">An error occurred while fetching recommendations</div>
+                            </div>
+                        `;
+                    } finally {
+                        // Hide loading animation and show results
+                        loadingDiv.style.display = 'none';
+                        resultsDiv.style.display = 'block';
+                    }
                 }
             });
 
