@@ -110,51 +110,102 @@ def get_genre_id(tmdb: TMDb, genre_name: str, media_type: str = 'movie'):
 
 def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
     try:
-        if isinstance(genre, str) and genre.isdigit():
-            genre = int(genre)
-
-        genre_id = genre if isinstance(genre, int) else None
-
-        if not genre_id:
-            print(f"Invalid genre: {genre}")
+        if isinstance(genre, str) and ',' in genre:
+            genre_id_str = genre
+        elif isinstance(genre, str) and genre.isdigit():
+            genre_id_str = genre
+        elif isinstance(genre, int):
+            genre_id_str = str(genre)
+        else:
+            print(f"Invalid genre format: {genre}")
             return []
 
-        genre_id_str = str(genre_id)
         current_year = 2024
 
-        # Different options for movies and TV shows with stricter filters
+        # Expanded discovery options for more diversity
         if media_type == 'movie':
             discovery_options = [
-                {   # Mix of popular and recent movies
+                {   # Recent popular movies
                     'sort_by': 'popularity.desc',
-                    'vote_count__gte': 300,
-                    'primary_release_date__gte': '2015-01-01',
+                    'vote_count__gte': 100,
+                    'primary_release_date__gte': '2020-01-01',
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Highly rated movies
+                {   # Highly rated movies from 2010s
                     'sort_by': 'vote_average.desc',
-                    'vote_count__gte': 1000,
+                    'vote_count__gte': 500,
                     'vote_average__gte': 7.0,
                     'primary_release_date__gte': '2010-01-01',
+                    'primary_release_date__lte': '2019-12-31',
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Classic movies (2000s)
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 1000,
+                    'primary_release_date__gte': '2000-01-01',
+                    'primary_release_date__lte': '2009-12-31',
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Hidden gems (lower vote count but high rating)
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 100,
+                    'vote_count__lte': 500,
+                    'vote_average__gte': 7.5,
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Older classics
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 500,
+                    'primary_release_date__gte': '1990-01-01',
+                    'primary_release_date__lte': '1999-12-31',
+                    'vote_average__gte': 7.0,
                     'with_original_language': 'en',
                     'page': 1
                 }
             ]
         else:  # TV shows
             discovery_options = [
-                {   # Mix of popular and recent shows
+                {   # Recent popular shows
                     'sort_by': 'popularity.desc',
-                    'vote_count__gte': 300,
-                    'first_air_date__gte': '2015-01-01',
+                    'vote_count__gte': 100,
+                    'first_air_date__gte': '2020-01-01',
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Highly rated shows
+                {   # Highly rated shows from 2010s
                     'sort_by': 'vote_average.desc',
-                    'vote_count__gte': 500,
+                    'vote_count__gte': 300,
                     'vote_average__gte': 7.5,
                     'first_air_date__gte': '2010-01-01',
+                    'first_air_date__lte': '2019-12-31',
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Classic shows (2000s)
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 500,
+                    'first_air_date__gte': '2000-01-01',
+                    'first_air_date__lte': '2009-12-31',
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Hidden gems
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 50,
+                    'vote_average__gte': 7.5,
+                    'with_original_language': 'en',
+                    'page': 2  # Use different page to get less popular items
+                },
+                {   # Older classics
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 300,
+                    'first_air_date__gte': '1990-01-01',
+                    'first_air_date__lte': '1999-12-31',
+                    'vote_average__gte': 7.0,
                     'with_original_language': 'en',
                     'page': 1
                 }
@@ -172,22 +223,25 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     }
                     results = tmdb.discover().movie(**params)
                 else:
+                    # Remove vote_count__lte if present for TV shows
+                    tv_params = options.copy()
+                    tv_params.pop('vote_count__lte', None)
                     params = {
                         'with_genres': genre_id_str,
-                        **options
+                        **tv_params
                     }
                     results = tmdb.discover().tv(**params)
 
                 if results:
                     results_list = list(results) if not isinstance(results, list) else results
                     if results_list:
-                        # Filter out items with very low popularity
+                        # Relaxed filtering criteria
                         filtered_results = [
                             item for item in results_list 
-                            if item.popularity > 50 and item.vote_count >= 100
+                            if item.popularity > 20 and item.vote_count >= 50
                         ]
-                        # Take more results from each query
-                        all_results.extend(filtered_results[:10])
+                        # Take fewer results from each query to ensure diversity
+                        all_results.extend(filtered_results[:5])
 
             except Exception as e:
                 print(f"Error with options={options}: {str(e)}")
@@ -200,31 +254,27 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                 seen_ids.add(item.id)
                 unique_results.append(item)
 
-        # Custom sorting that considers multiple factors
         def get_score(item):
-            # Base score from rating and popularity
-            score = (item.vote_average * 0.4) + (min(item.popularity, 1000) / 1000 * 0.3)
+            # Reduced weight of popularity in scoring
+            score = (item.vote_average * 0.5) + (min(item.popularity, 1000) / 1000 * 0.2)
             
-            # Bonus for higher vote counts (max bonus of 0.2)
-            vote_count_bonus = min(item.vote_count / 10000, 0.2)
+            # Increased weight of vote count but with diminishing returns
+            vote_count_bonus = min(item.vote_count / 5000, 0.2)
             score += vote_count_bonus
             
-            # Bonus for recency (max bonus of 0.1)
             try:
                 year = int(item.release_date.year if hasattr(item, 'release_date') else 
                           item.first_air_date.year if hasattr(item, 'first_air_date') else 
                           2000)
-                recency_bonus = ((year - 2000) / (current_year - 2000)) * 0.1
+                # Flatter recency curve to avoid too much recency bias
+                recency_bonus = ((year - 1990) / (current_year - 1990)) * 0.1
                 score += max(0, recency_bonus)
             except:
                 pass
             
             return score
 
-        # Sort results by custom score
         sorted_results = sorted(unique_results, key=get_score, reverse=True)
-
-        # Return up to 10 results
         return sorted_results[:10]
 
     except Exception as e:

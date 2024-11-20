@@ -91,37 +91,97 @@ def reccomend_movie(title, platform):
         print("No genres found")
         return []
 
-    # Dictionary to store unique recommendations by ID
     unique_recommendations = {}
     
+    # First, get recommendations for individual genres
     for genre_id in genres:
         try:
-            if media_type == 'tv':
-                genre_recommendations = get_popular_by_genre(tmdb, genre_id, media_type=media_type)
-            else:
-                genre_recommendations = get_popular_by_genre(tmdb, genre_id, media_type=media_type, include_adult=False)
-
+            genre_recommendations = get_popular_by_genre(tmdb, genre_id, media_type=media_type, include_adult=False)
             if genre_recommendations:
-                for item in genre_recommendations:
-                    # Skip if this is the input movie/show
+                for item in genre_recommendations[:5]:  # Limit to top 5 from each genre
                     if (media_type == 'movie' and item.id == movie_id) or \
                        (media_type == 'tv' and item.id == tv_id):
                         continue
                     
-                    # Store in dictionary with ID as key to ensure uniqueness
                     if item.id not in unique_recommendations:
-                        unique_recommendations[item.id] = item
+                        unique_recommendations[item.id] = {
+                            'item': item,
+                            'matching_genres': 1,
+                            'score': calculate_recommendation_score(item, 1)
+                        }
 
         except Exception as e:
             print(f"Error getting popular {media_type} in genre {genre_id}: {str(e)}")
             continue
 
-    # Convert dictionary values to list and sort
-    recommendations = list(unique_recommendations.values())
-    recommendations.sort(key=lambda x: x.vote_average, reverse=True)
-    
-    # Return top 10 unique recommendations
-    return recommendations[:10]
+    # Then, get recommendations that match multiple genres
+    if len(genres) > 1:
+        genre_combinations = [f"{genres[i]},{genres[j]}" 
+                            for i in range(len(genres)) 
+                            for j in range(i + 1, len(genres))]
+        
+        for genre_combo in genre_combinations:
+            try:
+                combo_recommendations = get_popular_by_genre(tmdb, genre_combo, media_type=media_type, include_adult=False)
+                if combo_recommendations:
+                    for item in combo_recommendations[:5]:  # Limit to top 5 from each combination
+                        if (media_type == 'movie' and item.id == movie_id) or \
+                           (media_type == 'tv' and item.id == tv_id):
+                            continue
+                        
+                        if item.id in unique_recommendations:
+                            # Update matching genres count and score for existing items
+                            unique_recommendations[item.id]['matching_genres'] = 2
+                            unique_recommendations[item.id]['score'] = calculate_recommendation_score(item, 2)
+                        else:
+                            unique_recommendations[item.id] = {
+                                'item': item,
+                                'matching_genres': 2,
+                                'score': calculate_recommendation_score(item, 2)
+                            }
+
+            except Exception as e:
+                print(f"Error getting popular {media_type} for genre combination {genre_combo}: {str(e)}")
+                continue
+
+    # Sort recommendations by score
+    sorted_recommendations = sorted(
+        unique_recommendations.values(),
+        key=lambda x: x['score'],
+        reverse=True
+    )
+
+    # Return only the items, maintaining the sorted order
+    return [rec['item'] for rec in sorted_recommendations[:10]]
+
+def calculate_recommendation_score(item, matching_genres):
+    # Base score from rating (0-10)
+    rating_score = item.vote_average * 0.4
+
+    # Popularity score (normalized to 0-1 range)
+    popularity_score = min(item.popularity / 1000, 1) * 0.2
+
+    # Vote count score (normalized to 0-1 range)
+    vote_count_score = min(item.vote_count / 10000, 1) * 0.1
+
+    # Genre matching bonus (0.15 per matching genre)
+    genre_score = matching_genres * 0.15
+
+    # Calculate recency score based on release date
+    try:
+        release_year = int(item.release_date[:4] if hasattr(item, 'release_date') else 
+                          item.first_air_date[:4] if hasattr(item, 'first_air_date') else 
+                          2000)
+        current_year = 2024
+        recency_score = ((release_year - 2000) / (current_year - 2000)) * 0.15
+        recency_score = max(0, min(recency_score, 0.15))
+    except:
+        recency_score = 0
+
+    # Combine all scores
+    total_score = rating_score + popularity_score + vote_count_score + genre_score + recency_score
+
+    return total_score
 
 
 # Testing the function
