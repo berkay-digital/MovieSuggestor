@@ -18,4 +18,26 @@ def reccomend_movie(title):
     else:
         print("Movie or serie not found")
         return []
+    
+    #Reccomend movie/series based on genre
+    recomendations = []
+    for genre in genres:
+        genre_recommendations = get_popular_by_genre(tmdb, genre, media_type=media_type)
+        recomendations.extend(genre_recommendations)
+
+    #Sorting based on the rating
+    recomendations = sorted(recomendations, key=lambda x: x.vote_average, reverse=True)
+    return recomendations
+
+#Testing the function
+if __name__ == "__main__":
+    title = input("Give the title of a movie or series: ")
+    recommendations = reccomend_movie(title)
+
+    if recommendations:
+        print("Recomendations: ")
+        for movie in recommendations[:5]:
+            print(f"Title: {movie.title}, Rating: {movie.vote_average}, Popularity: {movie.popularity}")
+    else:
+        print("No reccomendations")
 
