@@ -40,6 +40,7 @@ def get_movie_details(tmdb: TMDb, movie_id: int):
         movie = tmdb.movie(movie_id).details()
         credits = tmdb.movie(movie_id).credits()
         cast = [actor.name for actor in credits.cast[:10]]
+        poster_url = f"https://image.tmdb.org/t/p/original{movie.poster_path}"
 
         return {
             'id': movie.id,
@@ -50,6 +51,7 @@ def get_movie_details(tmdb: TMDb, movie_id: int):
             'cast': cast,
             'overview': movie.overview,
             'poster_path': movie.poster_path,
+            'poster_url': poster_url,
             'media_type': 'movie'
         }
     except Exception as e:
@@ -67,6 +69,8 @@ def get_tv_details(tmdb: TMDb, tv_id: int):
 
         credits = tmdb.tv(tv_id).credits()
         cast = [actor.name for actor in credits.cast[:10]]
+        poster_url = f"https://image.tmdb.org/t/p/original{tv.poster_path}"
+
 
         return {
             'id': tv.id,
@@ -77,6 +81,7 @@ def get_tv_details(tmdb: TMDb, tv_id: int):
             'cast': cast,
             'overview': tv.overview,
             'poster_path': tv.poster_path,
+            'poster_url': poster_url,
             'media_type': 'tv'
         }
     except Exception as e:
@@ -139,3 +144,6 @@ def get_popular_by_genre( tmdb: TMDb, genre_name: str, media_type: str = 'movie'
 # You can run this file to test the api
 if __name__ == "__main__":
     get_popular_by_genre(tmdb, 'comedy', media_type='movie')
+    print(get_id_by_title(tmdb=tmdb, title='Levels', media_type='movie'))
+    print(get_movie_details(tmdb=tmdb, movie_id=791042))
+
