@@ -14,6 +14,10 @@ app.config['DEBUG'] = True
 def index():
     return render_template('main.html')
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 ## API ##
 API_KEY=os.getenv('API_KEY')
 tmdb = TMDb(key=API_KEY, language='en', region='PL')
@@ -146,5 +150,5 @@ def get_popular_by_genre( tmdb: TMDb, genre_name: str, media_type: str = 'movie'
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)
 
