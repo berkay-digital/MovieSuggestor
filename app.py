@@ -27,12 +27,13 @@ def search():
     
     if recommendations:
         results = []
-        for movie in recommendations[:5]:
-            results.append({
-                'title': movie.title,
-                'rating': movie.vote_average,
-                'popularity': movie.popularity
-            })
+        for item in recommendations[:5]:
+            result = {
+                'title': item.name if platform == 'tv' else item.title,
+                'rating': item.vote_average,
+                'popularity': item.popularity
+            }
+            results.append(result)
         return jsonify({'success': True, 'results': results})
     
     return jsonify({'success': False, 'message': 'No recommendations found'})

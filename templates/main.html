@@ -562,13 +562,13 @@
         <p class="subtitle">Unveil the mysteries of entertainment</p>
         
         <div class="btn-group w-100" role="group" aria-label="Search categories">
-            <button type="button" class="btn category-btn active flex-grow-1" data-category="movie">Movies</button>
-            <button type="button" class="btn category-btn flex-grow-1" data-category="tv">TV Shows</button>
+            <button type="button" class="btn category-btn active" data-category="movie">Movies</button>
+            <button type="button" class="btn category-btn" data-category="tv">TV Shows</button>
         </div>
         
         <form id="search-form">
             <div class="search-input-container">
-                <input type="text" class="search-input" placeholder="Explore the cosmos..." aria-label="Search" id="search-input">
+                <input type="text" class="search-input" placeholder="Enter a movie title..." aria-label="Search" id="search-input">
                 <button class="search-btn" type="submit">
                     <svg class="search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -611,13 +611,26 @@
             const loadingDiv = document.getElementById('loading');
             let currentCategory = 'movie';
 
+            function updatePlaceholder() {
+                const placeholder = currentCategory === 'movie' 
+                    ? "Enter a movie title..." 
+                    : "Enter a TV show title...";
+                searchInput.placeholder = placeholder;
+            }
+
             categoryButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     categoryButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
                     currentCategory = this.getAttribute('data-category');
+                    updatePlaceholder();
+                    
+                    resultsDiv.style.display = 'none';
+                    resultsList.innerHTML = '';
                 });
             });
+
+            updatePlaceholder();
 
             searchForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -625,7 +638,6 @@
                 
                 if (query) {
                     try {
-                        // Show loading animation
                         loadingDiv.style.display = 'block';
                         resultsDiv.style.display = 'none';
                         
@@ -645,11 +657,12 @@
                         if (data.success) {
                             resultsList.innerHTML = '';
                             data.results.forEach(movie => {
+                                const title = currentCategory === 'tv' ? movie.title + ' (TV Series)' : movie.title;
                                 const movieElement = document.createElement('div');
                                 movieElement.className = 'result-card';
                                 movieElement.innerHTML = `
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <h5 class="result-title">${movie.title}</h5>
+                                        <h5 class="result-title">${title}</h5>
                                         <span class="rating-badge">
                                             <svg class="stat-icon" viewBox="0 0 24 24">
                                                 <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
@@ -683,14 +696,12 @@
                             </div>
                         `;
                     } finally {
-                        // Hide loading animation and show results
                         loadingDiv.style.display = 'none';
                         resultsDiv.style.display = 'block';
                     }
                 }
             });
 
-            // Particle.js configuration
             particlesJS('particles-js', {
                 particles: {
                     number: { value: 80, density: { enable: true, value_area: 800 } },
@@ -726,7 +737,6 @@
         const aiBtn = document.getElementById('aiBtn');
         
         aiBtn.addEventListener('click', () => {
-            // Add your AI functionality here
             console.log('AI button clicked');
         });
     </script>
