@@ -91,7 +91,9 @@ def reccomend_movie(title, platform):
         print("No genres found")
         return []
 
-    recomendations = []
+    # Dictionary to store unique recommendations by ID
+    unique_recommendations = {}
+    
     for genre_id in genres:
         try:
             if media_type == 'tv':
@@ -100,13 +102,26 @@ def reccomend_movie(title, platform):
                 genre_recommendations = get_popular_by_genre(tmdb, genre_id, media_type=media_type, include_adult=False)
 
             if genre_recommendations:
-                recomendations.extend(genre_recommendations)
+                for item in genre_recommendations:
+                    # Skip if this is the input movie/show
+                    if (media_type == 'movie' and item.id == movie_id) or \
+                       (media_type == 'tv' and item.id == tv_id):
+                        continue
+                    
+                    # Store in dictionary with ID as key to ensure uniqueness
+                    if item.id not in unique_recommendations:
+                        unique_recommendations[item.id] = item
+
         except Exception as e:
             print(f"Error getting popular {media_type} in genre {genre_id}: {str(e)}")
             continue
 
-    recomendations = sorted(recomendations, key=lambda x: x.vote_average, reverse=True)
-    return recomendations
+    # Convert dictionary values to list and sort
+    recommendations = list(unique_recommendations.values())
+    recommendations.sort(key=lambda x: x.vote_average, reverse=True)
+    
+    # Return top 10 unique recommendations
+    return recommendations[:10]
 
 
 # Testing the function

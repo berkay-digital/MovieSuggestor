@@ -6,6 +6,9 @@
     <title>Movie Suggestor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/translucent.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Raleway:wght@300;400;700&display=swap');
 
@@ -13,13 +16,12 @@
             background: linear-gradient(135deg, #1a0b2e, #4a2068, #7b3fa3);
             color: #fff;
             min-height: 100vh;
-            font-family: 'Raleway', sans-serif;
-            overflow-y: auto;
-            padding-bottom: 80px;
-            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Raleway', sans-serif;
+            overflow: hidden;
+            padding: 10px 0 60px;
         }
 
         #particles-js {
@@ -32,7 +34,9 @@
         }
 
         .search-container {
-            max-width: 600px;
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
             width: 90%;
             margin: 0 auto;
             padding: 2rem;
@@ -41,14 +45,23 @@
             border-radius: 30px;
             box-shadow: 0 8px 32px 0 rgba(74, 32, 104, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1;
-            transform: translateY(-2.5vh);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 100px);
+            overflow: hidden;
         }
 
         @media (max-height: 800px) {
             .search-container {
-                margin: 100px auto;
-                transform: none;
+                margin: 10px auto;
+                max-height: calc(100vh - 500px);
+            }
+        }
+
+        @media (max-height: 600px) {
+            .search-container {
+                margin: 10px auto;
+                max-height: calc(100vh - 450px);
             }
         }
 
@@ -208,7 +221,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 1rem;
+            padding: 0.75rem;
             text-align: center;
             z-index: 1;
             font-size: 0.9rem;
@@ -396,29 +409,53 @@
         }
 
         .results-container {
-            max-height: 400px;
-            overflow-y: auto;
+            position: relative;
             margin-top: 20px;
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 500px);
             padding-right: 10px;
         }
 
-        .results-container::-webkit-scrollbar {
+        .results-fixed {
+            flex: none;  /* Don't grow or shrink */
+        }
+
+        .results-scrollable {
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 10px;
+        }
+
+        .results-scrollable::-webkit-scrollbar {
             width: 8px;
         }
 
-        .results-container::-webkit-scrollbar-track {
+        .results-scrollable::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
         }
 
-        .results-container::-webkit-scrollbar-thumb {
+        .results-scrollable::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
         }
 
-        .results-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .search-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        @media (max-height: 800px) {
+            .search-container {
+                margin: 10px auto;
+                max-height: calc(100vh - 500px);
+            }
+
+            .results-container {
+                max-height: calc(100vh - 400px);
+            }
         }
 
         .list-group-item {
@@ -473,15 +510,54 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .result-card.high {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            z-index: 2;
+            box-shadow: 0 0 25px rgba(33, 150, 243, 0.5),
+                        0 0 15px rgba(33, 150, 243, 0.3);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        @keyframes rainbow-glow {
+            0% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.5), 0 0 15px rgba(255, 0, 0, 0.3); }
+            20% { box-shadow: 0 0 25px rgba(255, 165, 0, 0.5), 0 0 15px rgba(255, 165, 0, 0.3); }
+            40% { box-shadow: 0 0 25px rgba(255, 255, 0, 0.5), 0 0 15px rgba(255, 255, 0, 0.3); }
+            60% { box-shadow: 0 0 25px rgba(0, 255, 0, 0.5), 0 0 15px rgba(0, 255, 0, 0.3); }
+            80% { box-shadow: 0 0 25px rgba(0, 0, 255, 0.5), 0 0 15px rgba(0, 0, 255, 0.3); }
+            100% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.5), 0 0 15px rgba(255, 0, 0, 0.3); }
+        }
+
+        .result-card.extreme {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            z-index: 3;
+            animation: rainbow-glow 10s linear infinite;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .result-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-card.high:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                        0 0 30px rgba(33, 150, 243, 0.6),
+                        0 0 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .result-card.extreme:hover {
+            transform: translateY(-5px);
+            animation: rainbow-glow 5s linear infinite;
         }
 
         .result-title {
@@ -518,10 +594,222 @@
         }
 
         .popularity-badge {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .popularity-badge.extreme {
+            background: linear-gradient(45deg, #9c27b0, #e040fb);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(170, 0, 255, 0.5);
+        }
+
+        .popularity-badge.high {
+            background: linear-gradient(45deg, #2196f3, #03a9f4);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+        }
+
+        .popularity-badge.medium {
+            background: linear-gradient(45deg, #ffc107, #ff9800);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
+        }
+
+        .popularity-badge.low {
+            background: linear-gradient(45deg, #f44336, #e91e63);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .tooltip-content {
+            padding: 8px;
+            max-width: 200px;
+        }
+
+        .tooltip-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f6d365;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 4px;
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .tooltip-value {
+            color: #fff;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .tooltip-desc {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .tippy-box[data-theme~='translucent'] {
+            background-color: rgba(26, 11, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tippy-box[data-theme~='translucent'][data-placement^='top'] > .tippy-arrow::before {
+            border-top-color: rgba(26, 11, 46, 0.95);
+        }
+
+        .result-card {
+            position: relative;
+            z-index: 1;
+        }
+
+        body * {
+            z-index: 1;
+        }
+
+        #particles-js {
+            z-index: 0 !important;
+        }
+
+        .menu-btn,
+        .ai-btn,
+        .menu-dropdown {
+            z-index: 99999;
+        }
+
+        .footer {
+            z-index: 99998;
+        }
+
+        .results-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 10px 30px;
+            margin: 20px 0;
+        }
+
+        .results-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .results-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .results-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .search-container {
+            margin: 20px auto;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .search-header {
+            position: sticky;
+            top: 0;
+            background: rgba(26, 11, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            margin: -2rem -2rem 1rem -2rem;
+            border-radius: 30px 30px 0 0;
+            z-index: 2;
+        }
+
+        .search-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .non-scrollable-content {
+            flex-shrink: 0;
+        }
+
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .tooltip-content {
+            padding: 8px;
+            max-width: 200px;
+        }
+
+        .tooltip-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f6d365;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 4px;
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .tooltip-value {
+            color: #fff;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .tooltip-desc {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .tippy-box[data-theme~='translucent'] {
+            background-color: rgba(26, 11, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tippy-box[data-theme~='translucent'][data-placement^='top'] > .tippy-arrow::before {
+            border-top-color: rgba(26, 11, 46, 0.95);
+        }
+
+        .result-card {
+            position: relative;
+            z-index: 1;
+        }
+
+        .results-scrollable {
+            padding: 10px 30px;
+            margin: 0 -30px;
         }
     </style>
 </head>
@@ -558,35 +846,38 @@
     </div>
 
     <div class="search-container text-center">
-        <h1 class="mb-2">Movie Suggestor</h1>
-        <p class="subtitle">Unveil the mysteries of entertainment</p>
-        
-        <div class="btn-group w-100" role="group" aria-label="Search categories">
-            <button type="button" class="btn category-btn active" data-category="movie">Movies</button>
-            <button type="button" class="btn category-btn" data-category="tv">TV Shows</button>
-        </div>
-        
-        <form id="search-form">
-            <div class="search-input-container">
-                <input type="text" class="search-input" placeholder="Enter a movie title..." aria-label="Search" id="search-input">
-                <button class="search-btn" type="submit">
-                    <svg class="search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                    </svg>
-                    <span class="visually-hidden">Search</span>
-                </button>
+        <div class="non-scrollable-content">
+            <h1 class="mb-2">Movie Suggestor</h1>
+            <p class="subtitle">Unveil the mysteries of entertainment</p>
+            
+            <div class="btn-group w-100" role="group" aria-label="Search categories">
+                <button type="button" class="btn category-btn active" data-category="movie">Movies</button>
+                <button type="button" class="btn category-btn" data-category="tv">TV Series</button>
             </div>
-        </form>
+            
+            <form id="search-form">
+                <div class="search-input-container">
+                    <input type="text" class="search-input" placeholder="Enter a movie title..." aria-label="Search" id="search-input">
+                    <button class="search-btn" type="submit">
+                        <svg class="search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        <span class="visually-hidden">Search</span>
+                    </button>
+                </div>
+            </form>
 
-        <div class="loading-container" id="loading">
-            <div class="loading-bar"></div>
+            <div class="loading-container" id="loading">
+                <div class="loading-bar"></div>
+            </div>
+
+            <div id="results" class="mt-4" style="display: none;">
+                <h3 class="text-white mb-3">Recommendations</h3>
+            </div>
         </div>
 
-        <div id="results" class="mt-4" style="display: none;">
-            <h3 class="text-white mb-3">Recommendations</h3>
-            <div class="results-container">
-                <div id="results-list" class="list-group">
-                </div>
+        <div class="results-container">
+            <div id="results-list" class="list-group">
             </div>
         </div>
     </div>
@@ -603,34 +894,143 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const categoryButtons = document.querySelectorAll('.category-btn');
+            // Get DOM elements
             const searchForm = document.getElementById('search-form');
             const searchInput = document.getElementById('search-input');
             const resultsDiv = document.getElementById('results');
             const resultsList = document.getElementById('results-list');
             const loadingDiv = document.getElementById('loading');
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            const menuBtn = document.getElementById('menuBtn');
+            const menuDropdown = document.getElementById('menuDropdown');
+            const aiBtn = document.getElementById('aiBtn');
+            
             let currentCategory = 'movie';
 
-            function updatePlaceholder() {
-                const placeholder = currentCategory === 'movie' 
-                    ? "Enter a movie title..." 
-                    : "Enter a TV show title...";
-                searchInput.placeholder = placeholder;
+            function getPopularityCategory(popularity) {
+                if (popularity >= 1000) return 'extreme';
+                if (popularity >= 500) return 'high';
+                if (popularity >= 100) return 'medium';
+                return 'low';
             }
 
+            function getPopularityText(popularity) {
+                if (popularity >= 1000) return 'Extreme';
+                if (popularity >= 500) return 'High';
+                if (popularity >= 100) return 'Medium';
+                return 'Low';
+            }
+
+            // Function to create movie element
+            function createMovieElement(movie) {
+                const movieElement = document.createElement('div');
+                const popularityCategory = getPopularityCategory(movie.popularity);
+                movieElement.className = `result-card ${popularityCategory}`;
+                
+                const popularityText = getPopularityText(movie.popularity);
+                const title = currentCategory === 'tv' ? movie.title + ' (TV Series)' : movie.title;
+                
+                movieElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="result-title">${title}</h5>
+                        <span class="rating-badge" id="rating-${movie.id}">
+                            <svg class="stat-icon" viewBox="0 0 24 24">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            </svg>
+                            ${movie.rating.toFixed(1)}
+                        </span>
+                    </div>
+                    <div class="result-stats">
+                        <span class="popularity-badge ${popularityCategory}" id="popularity-${movie.id}">
+                            <svg class="stat-icon" viewBox="0 0 24 24">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                            </svg>
+                            Popularity: ${popularityText}
+                        </span>
+                    </div>
+                `;
+
+                // Add tooltips after the element is created
+                setTimeout(() => {
+                    tippy(`#rating-${movie.id}`, {
+                        content: `
+                            <div class="tooltip-content">
+                                <div class="tooltip-title">Rating Details</div>
+                                <div class="tooltip-row">
+                                    <span class="tooltip-label">Score:</span>
+                                    <span class="tooltip-value">${movie.rating.toFixed(1)} / 10</span>
+                                </div>
+                                <div class="tooltip-desc">Based on TMDb user ratings</div>
+                            </div>
+                        `,
+                        allowHTML: true,
+                        theme: 'translucent',
+                        animation: 'shift-away',
+                        placement: 'top',
+                    });
+
+                    tippy(`#popularity-${movie.id}`, {
+                        content: `
+                            <div class="tooltip-content">
+                                <div class="tooltip-title">Popularity Details</div>
+                                <div class="tooltip-row">
+                                    <span class="tooltip-label">Score:</span>
+                                    <span class="tooltip-value">${Math.round(movie.popularity)}</span>
+                                </div>
+                                <div class="tooltip-row">
+                                    <span class="tooltip-label">Level:</span>
+                                    <span class="tooltip-value">${popularityText}</span>
+                                </div>
+                                <div class="tooltip-desc">Based on recent views and interactions</div>
+                            </div>
+                        `,
+                        allowHTML: true,
+                        theme: 'translucent',
+                        animation: 'shift-away',
+                        placement: 'top',
+                    });
+                }, 0);
+
+                return movieElement;
+            }
+
+            // Function to adjust container height
+            function adjustContainerHeight() {
+                const searchContainer = document.querySelector('.search-container');
+                const resultsContainer = document.querySelector('.results-container');
+                const footer = document.querySelector('.footer');
+                
+                if (resultsContainer) {
+                    const viewportHeight = window.innerHeight;
+                    const searchContainerTop = searchContainer.getBoundingClientRect().top;
+                    const footerHeight = footer.offsetHeight;
+                    const padding = 40;
+                    
+                    const maxHeight = viewportHeight - searchContainerTop - footerHeight - padding;
+                    resultsContainer.style.maxHeight = `${maxHeight}px`;
+                }
+            }
+
+            // Function to update search input placeholder
+            function updatePlaceholder() {
+                searchInput.placeholder = currentCategory === 'movie' 
+                    ? "Enter a movie title..." 
+                    : "Enter a TV show title...";
+            }
+
+            // Event Listeners
             categoryButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     categoryButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
                     currentCategory = this.getAttribute('data-category');
+                    searchInput.value = '';
                     updatePlaceholder();
                     
                     resultsDiv.style.display = 'none';
                     resultsList.innerHTML = '';
                 });
             });
-
-            updatePlaceholder();
 
             searchForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -656,31 +1056,30 @@
                         
                         if (data.success) {
                             resultsList.innerHTML = '';
-                            data.results.forEach(movie => {
-                                const title = currentCategory === 'tv' ? movie.title + ' (TV Series)' : movie.title;
-                                const movieElement = document.createElement('div');
-                                movieElement.className = 'result-card';
-                                movieElement.innerHTML = `
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <h5 class="result-title">${title}</h5>
-                                        <span class="rating-badge">
-                                            <svg class="stat-icon" viewBox="0 0 24 24">
-                                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                                            </svg>
-                                            ${movie.rating.toFixed(1)}
-                                        </span>
-                                    </div>
-                                    <div class="result-stats">
-                                        <span class="popularity-badge">
-                                            <svg class="stat-icon" viewBox="0 0 24 24">
-                                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
-                                            </svg>
-                                            Popularity: ${Math.round(movie.popularity)}
-                                        </span>
-                                    </div>
-                                `;
-                                resultsList.appendChild(movieElement);
+                            
+                            // Create containers for fixed and scrollable results
+                            const fixedContainer = document.createElement('div');
+                            fixedContainer.className = 'results-fixed';
+                            
+                            const scrollableContainer = document.createElement('div');
+                            scrollableContainer.className = 'results-scrollable';
+                            
+                            data.results.forEach((movie, index) => {
+                                const movieElement = createMovieElement(movie);
+                                
+                                // Add to fixed or scrollable container based on index
+                                if (index < 3) {
+                                    fixedContainer.appendChild(movieElement);
+                                } else {
+                                    scrollableContainer.appendChild(movieElement);
+                                }
                             });
+                            
+                            // Clear and append both containers
+                            resultsList.appendChild(fixedContainer);
+                            resultsList.appendChild(scrollableContainer);
+                            
+                            setTimeout(adjustContainerHeight, 0);
                         } else {
                             resultsList.innerHTML = `
                                 <div class="result-card">
@@ -702,6 +1101,27 @@
                 }
             });
 
+            menuBtn.addEventListener('click', () => {
+                menuDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                    menuDropdown.classList.remove('show');
+                }
+                if (!e.target.closest('.tooltip-container')) {
+                    const tooltips = document.querySelectorAll('.custom-tooltip');
+                    tooltips.forEach(tooltip => {
+                        tooltip.style.display = 'none';
+                    });
+                }
+            });
+
+            aiBtn.addEventListener('click', () => {
+                console.log('AI button clicked');
+            });
+
+            // Initialize particles.js
             particlesJS('particles-js', {
                 particles: {
                     number: { value: 80, density: { enable: true, value_area: 800 } },
@@ -719,25 +1139,19 @@
                 },
                 retina_detect: true
             });
-        });
 
-        const menuBtn = document.getElementById('menuBtn');
-        const menuDropdown = document.getElementById('menuDropdown');
+            // Window event listeners
+            window.addEventListener('resize', adjustContainerHeight);
+            window.addEventListener('load', adjustContainerHeight);
 
-        menuBtn.addEventListener('click', () => {
-            menuDropdown.classList.toggle('show');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-                menuDropdown.classList.remove('show');
-            }
-        });
-
-        const aiBtn = document.getElementById('aiBtn');
-        
-        aiBtn.addEventListener('click', () => {
-            console.log('AI button clicked');
+            // Initial setup
+            updatePlaceholder();
+            
+            // Set initial container styles
+            const searchContainer = document.querySelector('.search-container');
+            searchContainer.style.margin = '20px auto';
+            searchContainer.style.maxHeight = '90vh';
+            searchContainer.style.overflowY = 'auto';
         });
     </script>
 </body>

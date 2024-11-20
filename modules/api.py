@@ -109,10 +109,6 @@ def get_genre_id(tmdb: TMDb, genre_name: str, media_type: str = 'movie'):
 
 
 def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
-    """"
-    function for getting popular by genre
-    returning dict of popular movies or series
-    """
     try:
         if isinstance(genre, str) and genre.isdigit():
             genre = int(genre)
@@ -124,25 +120,45 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
             return []
 
         genre_id_str = str(genre_id)
+        current_year = 2024
 
-        discovery_options = [
-            {
-                'sort_by': 'popularity.desc',
-                'vote_count__gte': 100,
-                'page': 1
-            },
-            {
-                'sort_by': 'vote_average.desc',
-                'vote_count__gte': 100,
-                'vote_count__lte': 1000,
-                'page': 2
-            },
-            {
-                'sort_by': 'primary_release_date.desc' if media_type == 'movie' else 'first_air_date.desc',
-                'vote_count__gte': 50,
-                'page': 3
-            }
-        ]
+        # Different options for movies and TV shows with stricter filters
+        if media_type == 'movie':
+            discovery_options = [
+                {   # Mix of popular and recent movies
+                    'sort_by': 'popularity.desc',
+                    'vote_count__gte': 300,
+                    'primary_release_date__gte': '2015-01-01',
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Highly rated movies
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 1000,
+                    'vote_average__gte': 7.0,
+                    'primary_release_date__gte': '2010-01-01',
+                    'with_original_language': 'en',
+                    'page': 1
+                }
+            ]
+        else:  # TV shows
+            discovery_options = [
+                {   # Mix of popular and recent shows
+                    'sort_by': 'popularity.desc',
+                    'vote_count__gte': 300,
+                    'first_air_date__gte': '2015-01-01',
+                    'with_original_language': 'en',
+                    'page': 1
+                },
+                {   # Highly rated shows
+                    'sort_by': 'vote_average.desc',
+                    'vote_count__gte': 500,
+                    'vote_average__gte': 7.5,
+                    'first_air_date__gte': '2010-01-01',
+                    'with_original_language': 'en',
+                    'page': 1
+                }
+            ]
 
         all_results = []
 
@@ -165,7 +181,13 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                 if results:
                     results_list = list(results) if not isinstance(results, list) else results
                     if results_list:
-                        all_results.extend(results_list[:5])
+                        # Filter out items with very low popularity
+                        filtered_results = [
+                            item for item in results_list 
+                            if item.popularity > 50 and item.vote_count >= 100
+                        ]
+                        # Take more results from each query
+                        all_results.extend(filtered_results[:10])
 
             except Exception as e:
                 print(f"Error with options={options}: {str(e)}")
@@ -178,12 +200,31 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                 seen_ids.add(item.id)
                 unique_results.append(item)
 
-        sorted_results = sorted(
-            unique_results,
-            key=lambda x: (x.vote_average * 0.7 + (x.popularity / 100) * 0.3),
-            reverse=True
-        )
+        # Custom sorting that considers multiple factors
+        def get_score(item):
+            # Base score from rating and popularity
+            score = (item.vote_average * 0.4) + (min(item.popularity, 1000) / 1000 * 0.3)
+            
+            # Bonus for higher vote counts (max bonus of 0.2)
+            vote_count_bonus = min(item.vote_count / 10000, 0.2)
+            score += vote_count_bonus
+            
+            # Bonus for recency (max bonus of 0.1)
+            try:
+                year = int(item.release_date.year if hasattr(item, 'release_date') else 
+                          item.first_air_date.year if hasattr(item, 'first_air_date') else 
+                          2000)
+                recency_bonus = ((year - 2000) / (current_year - 2000)) * 0.1
+                score += max(0, recency_bonus)
+            except:
+                pass
+            
+            return score
 
+        # Sort results by custom score
+        sorted_results = sorted(unique_results, key=get_score, reverse=True)
+
+        # Return up to 10 results
         return sorted_results[:10]
 
     except Exception as e:

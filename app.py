@@ -27,8 +27,9 @@ def search():
     
     if recommendations:
         results = []
-        for item in recommendations[:5]:
+        for item in recommendations[:10]:
             result = {
+                'id': item.id,
                 'title': item.name if platform == 'tv' else item.title,
                 'rating': item.vote_average,
                 'popularity': item.popularity
