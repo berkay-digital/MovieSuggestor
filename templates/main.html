@@ -3,39 +3,514 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Application</title>
+    <title>Movie Suggestor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Raleway:wght@300;400;700&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #1a0b2e, #4a2068, #7b3fa3);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Raleway', sans-serif;
+            overflow: hidden;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
         }
+
+        .search-container {
+            max-width: 600px;
+            width: 90%;
+            margin: 20px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            box-shadow: 0 8px 32px 0 rgba(74, 32, 104, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+
         h1 {
-            color: #333;
-            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #f6d365, #fda085, #f6d365);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleGlow 3s ease-in-out infinite alternate;
         }
-        .content {
-            padding: 20px;
-            line-height: 1.6;
+
+        @keyframes titleGlow {
+            0% {
+                text-shadow: 0 0 10px rgba(246, 211, 101, 0.5);
+            }
+            100% {
+                text-shadow: 0 0 20px rgba(253, 160, 133, 0.8), 0 0 30px rgba(246, 211, 101, 0.6);
+            }
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+
+        .category-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: clamp(0.8rem, 1.5vw, 1rem);
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+        }
+
+        .category-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: linear-gradient(45deg, #f6d365, #fda085);
+            border-color: transparent;
+            box-shadow: 0 0 15px rgba(246, 211, 101, 0.5);
+        }
+
+        .search-input-container {
+            position: relative;
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 1rem;
+            padding-right: 70px;
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-btn {
+            background: linear-gradient(45deg, #f6d365, #fda085);
+            border: none;
+            color: #fff;
+            border-radius: 50%;
+            width: clamp(45px, 8vw, 60px);
+            height: clamp(45px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
+        .search-btn:hover {
+            box-shadow: 0 0 20px rgba(246, 211, 101, 0.7);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(246, 211, 101, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(246, 211, 101, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(246, 211, 101, 0);
+            }
+        }
+
+        .search-btn:focus {
+            animation: pulse 1.5s infinite;
+        }
+
+        .search-icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        @media (max-width: 480px) {
+            .search-container {
+                padding: 1.5rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .category-btn {
+                width: 100%;
+                margin: 0;
+                border-radius: 25px !important;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .search-container {
+                padding: 1rem;
+            }
+
+            .search-input {
+                padding: 0.75rem;
+                padding-right: 55px;
+            }
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            text-align: center;
+            z-index: 1;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #f6d365;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer a:hover {
+            color: #fda085;
+            transform: translateY(-2px);
+        }
+
+        .github-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+        }
+
+        .menu-dropdown {
+            position: fixed;
+            top: 75px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 0.5rem;
+            display: none;
+            z-index: 1000;
+            min-width: 200px;
+        }
+
+        .menu-dropdown.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f6d365;
+        }
+
+        .menu-item svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .ai-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #9d50bb, #6e48aa);
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: 0 0 15px rgba(157, 80, 187, 0.3);
+        }
+
+        .ai-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(157, 80, 187, 0.6);
+        }
+
+        .ai-btn::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 30px;
+            background: linear-gradient(45deg, #9d50bb, #6e48aa);
+            opacity: 0;
+            z-index: -1;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        .ai-particles {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #9d50bb;
+            animation: ai-particle 1.5s linear infinite;
+        }
+
+        .ai-btn:hover .ai-particles {
+            opacity: 1;
+        }
+
+        @keyframes ai-particle {
+            0% {
+                transform: rotate(0deg) translateX(10px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(360deg) translateX(10px) rotate(-360deg);
+                opacity: 0;
+            }
+        }
+
+        .ai-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to Flask Application</h1>
-        <div class="content">
-            <p>This is a basic landing page for your Flask application.</p>
-            <p>Start customizing this template to build your application!</p>
-        </div>
+    <div id="particles-js"></div>
+    <button class="menu-btn" id="menuBtn">
+        <svg class="menu-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
+    </button>
+
+    <button class="ai-btn" id="aiBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="ai-icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25.286 25.286 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135Z"/>
+            <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2V1.866ZM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5Z"/>
+        </svg>
+        <span>AI Mode</span>
+
+    </button>
+
+    <div class="menu-dropdown" id="menuDropdown">
+        <a href="/" class="menu-item">
+            <svg viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            Home
+        </a>
+        <a href="/about" class="menu-item">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            About
+        </a>
     </div>
+
+    <div class="search-container text-center">
+        <h1 class="mb-2">Movie Suggestor</h1>
+        <p class="subtitle">Unveil the mysteries of entertainment</p>
+        
+        <div class="btn-group w-100" role="group" aria-label="Search categories">
+            <button type="button" class="btn category-btn active flex-grow-1" data-category="movie">Movies</button>
+            <button type="button" class="btn category-btn flex-grow-1" data-category="tv">TV Shows</button>
+        </div>
+        
+        <form id="search-form">
+            <div class="search-input-container">
+                <input type="text" class="search-input" placeholder="Explore the cosmos..." aria-label="Search" id="search-input">
+                <button class="search-btn" type="submit">
+                    <svg class="search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <span class="visually-hidden">Search</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <footer class="footer">
+        <a href="https://github.com/berkay-digital/MovieSuggestor" target="_blank" rel="noopener noreferrer">
+            <svg class="github-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Open Source on GitHub
+        </a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            const searchForm = document.getElementById('search-form');
+            const searchInput = document.getElementById('search-input');
+            let currentCategory = 'movie';
+
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.getAttribute('data-category');
+                });
+            });
+
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                if (query) {
+                    console.log(`Searching for "${query}" in category: ${currentCategory}`);
+                    // Implement your search logic here
+                }
+            });
+
+            // Particle.js configuration
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: "#ffffff" },
+                    shape: { type: "circle" },
+                    opacity: { value: 0.5, random: true, anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } },
+                    size: { value: 3, random: true, anim: { enable: true, speed: 2, size_min: 0.1, sync: false } },
+                    line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+                    move: { enable: true, speed: 1, direction: "none", random: true, straight: false, out_mode: "out", bounce: false }
+                },
+                interactivity: {
+                    detect_on: "canvas",
+                    events: { onhover: { enable: true, mode: "repulse" }, onclick: { enable: true, mode: "push" }, resize: true },
+                    modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+                },
+                retina_detect: true
+            });
+        });
+
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+
+        menuBtn.addEventListener('click', () => {
+            menuDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                menuDropdown.classList.remove('show');
+            }
+        });
+
+        const aiBtn = document.getElementById('aiBtn');
+        
+        aiBtn.addEventListener('click', () => {
+            // Add your AI functionality here
+            console.log('AI button clicked');
+        });
+    </script>
 </body>
 </html>
