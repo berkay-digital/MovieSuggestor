@@ -221,12 +221,10 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 0.75rem;
+            padding: 1rem;
             text-align: center;
             z-index: 1;
             font-size: 0.9rem;
-            background: rgba(26, 11, 46, 0.8);
-            backdrop-filter: blur(10px);
         }
 
         .footer a {
@@ -328,8 +326,8 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(45deg, #9d50bb, #6e48aa);
-            border: none;
+            background: linear-gradient(45deg, #ff0066, #6600ff);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 25px;
             padding: 0.5rem 1rem;
             display: flex;
@@ -340,12 +338,14 @@
             z-index: 1000;
             color: #fff;
             font-weight: 500;
-            box-shadow: 0 0 15px rgba(157, 80, 187, 0.3);
+            box-shadow: 0 0 15px rgba(255, 0, 102, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .ai-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(157, 80, 187, 0.6);
+            background: linear-gradient(45deg, #ff3399, #9933ff);
+            box-shadow: 0 0 20px rgba(255, 0, 102, 0.5);
         }
 
         .ai-btn::before {
@@ -356,7 +356,7 @@
             right: -10px;
             bottom: -10px;
             border-radius: 30px;
-            background: linear-gradient(45deg, #9d50bb, #6e48aa);
+            background: linear-gradient(45deg, #ff0066, #6600ff);
             opacity: 0;
             z-index: -1;
             animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -368,7 +368,7 @@
                 opacity: 0;
             }
             50% {
-                opacity: 0.2;
+                opacity: 0.3;
             }
             100% {
                 transform: scale(1.3);
@@ -383,7 +383,7 @@
             width: 4px;
             height: 4px;
             border-radius: 50%;
-            background: #9d50bb;
+            background: #ff3399;
             animation: ai-particle 1.5s linear infinite;
         }
 
@@ -811,6 +811,669 @@
             padding: 10px 30px;
             margin: 0 -30px;
         }
+
+        .ai-prompt-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-prompt-container {
+            background: linear-gradient(135deg, rgba(26, 11, 46, 0.95), rgba(74, 32, 104, 0.95));
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            box-shadow: 0 8px 32px 0 rgba(74, 32, 104, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-prompt-overlay.active .ai-prompt-container {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .ai-prompt-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-prompt-header h3 {
+            margin: 0;
+            color: #f6d365;
+            font-family: 'Cinzel', serif;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .ai-prompt-content {
+            padding: 20px;
+            flex: 0 0 auto;
+        }
+
+        .ai-prompt-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+        }
+
+        #aiPromptInput {
+            width: 100%;
+            min-height: 100px;
+            max-height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            color: #fff;
+            font-size: 16px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+
+        #aiPromptInput:focus {
+            outline: none;
+            border-color: #f6d365;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        #aiPromptInput::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #aiPromptInput::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        #aiPromptInput::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        #aiPromptInput::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .ai-prompt-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .ai-submit-btn {
+            background: linear-gradient(45deg, #9d50bb, #6e48aa);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 80, 187, 0.4);
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ai-response {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-response-scroll {
+            overflow-y: auto;
+            max-height: 40vh;
+            margin-right: -10px;
+            padding-right: 10px;
+        }
+
+        .ai-response-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ai-response-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .ai-response-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .ai-response-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .ai-response-content {
+            color: #fff;
+            line-height: 1.6;
+            font-size: 1.1em;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+
+        .ai-response-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ai-response-header h4 {
+            color: #f6d365;
+            margin: 0;
+            font-family: 'Cinzel', serif;
+        }
+
+        .ai-thinking-icon {
+            width: 24px;
+            height: 24px;
+            fill: #f6d365;
+        }
+
+        .ai-response-content strong {
+            color: #f6d365;
+            font-weight: 600;
+        }
+
+        .ai-response-content em {
+            color: #9d50bb;
+            font-style: normal;
+            font-weight: 500;
+        }
+
+        @keyframes rainbow-text {
+            0% { color: #ff0000; }
+            20% { color: #ff69b4; }
+            40% { color: #7b68ee; }
+            60% { color: #3498db; }
+            80% { color: #2ecc71; }
+            100% { color: #ff0000; }
+        }
+
+        .ai-prompt-header h3 span,
+        .ai-response-header h4 span,
+        .ai-btn span {
+            background: linear-gradient(
+                90deg,
+                #ff0000,    /* Bright red */
+                #ff4d00,    /* Orange-red */
+                #ffa500,    /* Orange */
+                #ffcf00,    /* Golden yellow */
+                #00ff95,    /* Bright mint */
+                #00ffcc,    /* Turquoise */
+                #ff3399,    /* Pink */
+                #ff0066,    /* Hot pink */
+                #ff0000     /* Back to red */
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow-shift 10s linear infinite;
+        }
+
+        .ai-header-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 5px 0;
+        }
+
+        .ai-icon-container {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-brain-icon {
+            width: 100%;
+            height: 100%;
+            fill: #f6d365;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .ai-icon-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ai-icon-particles::before,
+        .ai-icon-particles::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #f6d365;
+            animation: particle-float 2s ease-in-out infinite;
+        }
+
+        .ai-icon-particles::before {
+            top: 0;
+            left: 50%;
+            animation-delay: 0.5s;
+        }
+
+        .ai-icon-particles::after {
+            bottom: 0;
+            right: 50%;
+            animation-delay: 1s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes particle-float {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(10px, -10px) scale(1.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(20px, -20px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @keyframes rainbow-text {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .ai-prompt-header h3 span,
+        .ai-response-header h4 span,
+        .ai-btn span {
+            background: linear-gradient(
+                90deg,
+                #ff0000,    /* Bright red */
+                #ff4d00,    /* Orange-red */
+                #ffa500,    /* Orange */
+                #ffcf00,    /* Golden yellow */
+                #00ff95,    /* Bright mint */
+                #00ffcc,    /* Turquoise */
+                #ff3399,    /* Pink */
+                #ff0066,    /* Hot pink */
+                #ff0000     /* Back to red */
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow-shift 10s linear infinite;
+        }
+
+        .ai-prompt-overlay.active .ai-prompt-container {
+            animation: prompt-enter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes prompt-enter {
+            0% {
+                transform: translateY(30px) scale(0.95);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .ai-submit-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .ai-submit-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Update icon styles */
+        .ai-brain-icon,
+        .ai-thinking-icon {
+            width: 24px;
+            height: 24px;
+            fill: url(#rainbow-gradient);
+        }
+
+        /* Add smooth rainbow animation */
+        @keyframes rainbow-shift {
+            0% { 
+                background-position: 0% 50%;
+            }
+            50% { 
+                background-position: 100% 50%;
+            }
+            100% { 
+                background-position: 0% 50%;
+            }
+        }
+
+        .ai-prompt-header h3 span,
+        .ai-response-header h4 span,
+        .ai-btn span {
+            background: linear-gradient(
+                90deg,
+                #ff0000,    /* Bright red */
+                #ff4d00,    /* Orange-red */
+                #ffa500,    /* Orange */
+                #ffcf00,    /* Golden yellow */
+                #00ff95,    /* Bright mint */
+                #00ffcc,    /* Turquoise */
+                #ff3399,    /* Pink */
+                #ff0066,    /* Hot pink */
+                #ff0000     /* Back to red */
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow-shift 10s linear infinite;
+        }
+
+        /* Add SVG gradient definition */
+        .ai-prompt-container {
+            /* existing styles... */
+        }
+
+        .ai-icon-container {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-prompt-header svg.ai-icon {
+            width: 24px;
+            height: 24px;
+            fill: rgba(255, 255, 255, 0.9);
+        }
+
+        .ai-header-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+
+        .ai-prompt-header svg.ai-icon {
+            animation: none;
+        }
+
+        .question-icon {
+            width: 18px;
+            height: 18px;
+            fill: rgba(255, 255, 255, 0.6);
+            cursor: help;
+            transition: fill 0.3s ease;
+        }
+
+        .question-icon:hover {
+            fill: rgba(255, 255, 255, 0.9);
+        }
+
+        .ai-response-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ai-response-header .ai-icon {
+            width: 24px;
+            height: 24px;
+            fill: rgba(255, 255, 255, 0.9);
+            cursor: help;
+            transition: fill 0.3s ease;
+        }
+
+        .ai-response-header .ai-icon:hover {
+            fill: rgba(255, 255, 255, 1);
+        }
+
+        .movie-details-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .movie-details-container {
+            background: linear-gradient(135deg, rgba(26, 11, 46, 0.95), rgba(74, 32, 104, 0.95));
+            border-radius: 20px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            box-shadow: 0 8px 32px 0 rgba(74, 32, 104, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .movie-details-overlay.active .movie-details-container {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .movie-details-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .movie-details-header h3 {
+            margin: 0;
+            color: #f6d365;
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+        }
+
+        .movie-details-content {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(90vh - 80px);
+        }
+
+        .movie-details-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .movie-details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .poster-container {
+            width: 100%;
+            aspect-ratio: 2/3;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .poster-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .details-container {
+            color: #fff;
+        }
+
+        .detail-row {
+            margin-bottom: 15px;
+        }
+
+        .detail-label {
+            color: #f6d365;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .detail-value {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .categories-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .category-tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cast-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .cast-tag {
+            background: rgba(246, 211, 101, 0.1);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            color: #f6d365;
+            border: 1px solid rgba(246, 211, 101, 0.2);
+        }
+
+        .overview-section {
+            margin-top: 20px;
+        }
+
+        .overview-section h4 {
+            color: #f6d365;
+            margin-bottom: 10px;
+        }
+
+        .overview-section p {
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .result-card {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -826,8 +1489,7 @@
             <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25.286 25.286 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135Z"/>
             <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2V1.866ZM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5Z"/>
         </svg>
-        <span>AI Mode</span>
-
+        <span><span>AI</span> Mode</span>
     </button>
 
     <div class="menu-dropdown" id="menuDropdown">
@@ -839,10 +1501,45 @@
         </a>
         <a href="/about" class="menu-item">
             <svg viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
             </svg>
             About
         </a>
+        <a href="/stats" class="menu-item">
+            <svg viewBox="0 0 24 24">
+                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+            </svg>
+            Statistics
+        </a>
+    </div>
+
+    <div class="ai-prompt-overlay" id="aiPromptOverlay">
+        <div class="ai-prompt-container">
+            <div class="ai-prompt-header">
+                <div class="ai-header-content">
+                    <h3><span>AI</span> Movie Suggestion</h3>
+                </div>
+                <button class="close-btn" id="closeAiPrompt">×</button>
+            </div>
+            <div class="ai-prompt-content">
+                <p>Describe what kind of movie or TV show you're looking for:</p>
+                <textarea id="aiPromptInput" placeholder="Example: I want to watch a sci-fi movie with time travel and romance..."></textarea>
+                <div class="ai-prompt-footer">
+                    <button class="ai-submit-btn" id="aiSubmitBtn">
+                        <span class="btn-text">Get Suggestions</span>
+                        <div class="loader" style="display: none;"></div>
+                    </button>
+                </div>
+            </div>
+            <div class="ai-response" id="aiResponse" style="display: none;">
+                <div class="ai-response-header">
+                    <h4><span>AI</span> Suggestions</h4>
+                </div>
+                <div class="ai-response-scroll">
+                    <div class="ai-response-content"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="search-container text-center">
@@ -926,6 +1623,9 @@
                 const movieElement = document.createElement('div');
                 const popularityCategory = getPopularityCategory(movie.popularity);
                 movieElement.className = `result-card ${popularityCategory}`;
+                // Add these data attributes
+                movieElement.dataset.id = movie.id;
+                movieElement.dataset.mediaType = currentCategory;
                 
                 const popularityText = getPopularityText(movie.popularity);
                 const title = currentCategory === 'tv' ? movie.title + ' (TV Series)' : movie.title;
@@ -1153,6 +1853,212 @@
             searchContainer.style.maxHeight = '90vh';
             searchContainer.style.overflowY = 'auto';
         });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const aiBtn = document.getElementById('aiBtn');
+            const aiPromptOverlay = document.getElementById('aiPromptOverlay');
+            const closeAiPrompt = document.getElementById('closeAiPrompt');
+            const aiPromptContainer = document.querySelector('.ai-prompt-container');
+            const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+            const aiResponse = document.getElementById('aiResponse');
+            const loader = document.querySelector('.loader');
+            const btnText = document.querySelector('.btn-text');
+
+            function showAiPrompt() {
+                aiPromptOverlay.style.display = 'flex';
+                setTimeout(() => {
+                    aiPromptOverlay.classList.add('active');
+                }, 10);
+            }
+
+            function hideAiPrompt() {
+                aiPromptOverlay.classList.remove('active');
+                setTimeout(() => {
+                    aiPromptOverlay.style.display = 'none';
+                    aiResponse.style.display = 'none';
+                    document.getElementById('aiPromptInput').value = '';
+                }, 300);
+            }
+
+            aiBtn.addEventListener('click', showAiPrompt);
+            closeAiPrompt.addEventListener('click', hideAiPrompt);
+
+            aiPromptOverlay.addEventListener('click', (e) => {
+                if (e.target === aiPromptOverlay) {
+                    hideAiPrompt();
+                }
+            });
+
+            aiSubmitBtn.addEventListener('click', async () => {
+                const userInput = document.getElementById('aiPromptInput').value.trim();
+                if (!userInput) return;
+
+                // Show loading state
+                loader.style.display = 'block';
+                btnText.textContent = 'Getting suggestions...';
+                aiSubmitBtn.disabled = true;
+
+                try {
+                    const response = await fetch('/ai_suggest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ prompt: userInput })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        aiResponse.style.display = 'block';
+                        const formattedResponse = data.suggestion
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/\n/g, '<br>');
+                        
+                        aiResponse.querySelector('.ai-response-content').innerHTML = formattedResponse;
+                        
+                        // Scroll to the top of the response
+                        const responseScroll = document.querySelector('.ai-response-scroll');
+                        responseScroll.scrollTop = 0;
+                    } else {
+                        throw new Error(data.message || 'Failed to get AI suggestions');
+                    }
+                } catch (error) {
+                    aiResponse.style.display = 'block';
+                    aiResponse.querySelector('.ai-response-content').textContent = 
+                        'Sorry, there was an error getting AI suggestions. Please try again.';
+                } finally {
+                    // Reset loading state
+                    loader.style.display = 'none';
+                    btnText.textContent = 'Get Suggestions';
+                    aiSubmitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+    <div class="movie-details-overlay" id="movieDetailsOverlay">
+        <div class="movie-details-container">
+            <div class="movie-details-header">
+                <h3 id="movieDetailsTitle"></h3>
+                <button class="close-btn" id="closeMovieDetails">×</button>
+            </div>
+            <div class="movie-details-content">
+                <div class="movie-details-grid">
+                    <div class="poster-container">
+                        <img id="moviePoster" src="" alt="Movie Poster">
+                    </div>
+                    <div class="details-container">
+                        <div class="detail-row">
+                            <span class="detail-label">Rating:</span>
+                            <span id="movieRating" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Release Date:</span>
+                            <span id="movieReleaseDate" class="detail-value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Categories:</span>
+                            <div id="movieCategories" class="categories-container"></div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cast:</span>
+                            <div id="movieCast" class="cast-container"></div>
+                        </div>
+                        <div class="overview-section">
+                            <h4>Overview</h4>
+                            <p id="movieOverview"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add this JavaScript just before the closing </body> tag -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const movieDetailsOverlay = document.getElementById('movieDetailsOverlay');
+        const closeMovieDetails = document.getElementById('closeMovieDetails');
+        
+        async function showMovieDetails(id, mediaType) {
+            try {
+                const response = await fetch('/get_details', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: id,
+                        media_type: mediaType
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    const details = data.details;
+                    
+                    // Update modal content
+                    document.getElementById('movieDetailsTitle').textContent = details.title;
+                    document.getElementById('moviePoster').src = details.poster_url;
+                    document.getElementById('movieRating').textContent = `${details.vote_average.toFixed(1)}/10`;
+                    document.getElementById('movieReleaseDate').textContent = details.release_date;
+                    
+                    // Update categories
+                    const categoriesContainer = document.getElementById('movieCategories');
+                    categoriesContainer.innerHTML = details.category
+                        .map(cat => `<span class="category-tag">${cat}</span>`)
+                        .join('');
+                    
+                    // Update cast
+                    const castContainer = document.getElementById('movieCast');
+                    castContainer.innerHTML = details.cast
+                        .map(actor => `<span class="cast-tag">${actor}</span>`)
+                        .join('');
+                    
+                    document.getElementById('movieOverview').textContent = details.overview;
+                    
+                    // Show modal
+                    movieDetailsOverlay.style.display = 'flex';
+                    setTimeout(() => {
+                        movieDetailsOverlay.classList.add('active');
+                    }, 10);
+                }
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+            }
+        }
+
+        // Add click event to result cards
+        document.addEventListener('click', function(e) {
+            const resultCard = e.target.closest('.result-card');
+            if (resultCard) {
+                const id = resultCard.dataset.id;
+                const mediaType = resultCard.dataset.mediaType;
+                if (id && mediaType) {
+                    showMovieDetails(id, mediaType);
+                }
+            }
+        });
+
+        // Close modal events
+        closeMovieDetails.addEventListener('click', () => {
+            movieDetailsOverlay.classList.remove('active');
+            setTimeout(() => {
+                movieDetailsOverlay.style.display = 'none';
+            }, 300);
+        });
+
+        movieDetailsOverlay.addEventListener('click', (e) => {
+            if (e.target === movieDetailsOverlay) {
+                movieDetailsOverlay.classList.remove('active');
+                setTimeout(() => {
+                    movieDetailsOverlay.style.display = 'none';
+                }, 300);
+            }
+        });
+    });
     </script>
 </body>
 </html>
