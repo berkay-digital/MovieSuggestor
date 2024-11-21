@@ -12,7 +12,7 @@ tmdb = TMDb(key=API_KEY, language='en', region='PL')
 def get_id_by_title(tmdb: TMDb, title: str, media_type: str = 'movie'):
     """
     function for getting id based on movie or series name
-    specify if its a movie or series in media_type
+    specify if it's a movie or series in media_type
     returning id of movie or series
     """
     try:
@@ -41,11 +41,13 @@ def get_movie_details(tmdb: TMDb, movie_id: int):
         cast = [actor.name for actor in credits.cast[:10]]
         poster_url = f"https://image.tmdb.org/t/p/original{movie.poster_path}"
 
+        release_date = movie.release_date.strftime('%d/%m/%Y') if movie.release_date else 'N/A'
+
         return {
             'id': movie.id,
             'title': movie.title,
             'category': [genre.name for genre in movie.genres],
-            'release_date': movie.release_date,
+            'release_date': release_date,
             'vote_average': movie.vote_average,
             'cast': cast,
             'overview': movie.overview,
@@ -70,11 +72,13 @@ def get_tv_details(tmdb: TMDb, tv_id: int):
         cast = [actor.name for actor in credits.cast[:10]]
         poster_url = f"https://image.tmdb.org/t/p/original{tv.poster_path}"
 
+        release_date = tv.first_air_date.strftime('%d/%m/%Y') if tv.first_air_date else 'N/A'
+
         return {
             'id': tv.id,
             'title': tv.name,
             'category': [genre.name for genre in tv.genres],
-            'release_date': tv.first_air_date,
+            'release_date': release_date,
             'vote_average': tv.vote_average,
             'cast': cast,
             'overview': tv.overview,
@@ -125,14 +129,14 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
         # Expanded discovery options for more diversity
         if media_type == 'movie':
             discovery_options = [
-                {   # Recent popular movies
+                {  # Recent popular movies
                     'sort_by': 'popularity.desc',
                     'vote_count__gte': 100,
                     'primary_release_date__gte': '2020-01-01',
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Highly rated movies from 2010s
+                {  # Highly rated movies from 2010s
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 500,
                     'vote_average__gte': 7.0,
@@ -141,7 +145,7 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Classic movies (2000s)
+                {  # Classic movies (2000s)
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 1000,
                     'primary_release_date__gte': '2000-01-01',
@@ -149,7 +153,7 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Hidden gems (lower vote count but high rating)
+                {  # Hidden gems (lower vote count but high rating)
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 100,
                     'vote_count__lte': 500,
@@ -157,7 +161,7 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Older classics
+                {  # Older classics
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 500,
                     'primary_release_date__gte': '1990-01-01',
@@ -169,14 +173,14 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
             ]
         else:  # TV shows
             discovery_options = [
-                {   # Recent popular shows
+                {  # Recent popular shows
                     'sort_by': 'popularity.desc',
                     'vote_count__gte': 100,
                     'first_air_date__gte': '2020-01-01',
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Highly rated shows from 2010s
+                {  # Highly rated shows from 2010s
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 300,
                     'vote_average__gte': 7.5,
@@ -185,7 +189,7 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Classic shows (2000s)
+                {  # Classic shows (2000s)
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 500,
                     'first_air_date__gte': '2000-01-01',
@@ -193,14 +197,14 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     'with_original_language': 'en',
                     'page': 1
                 },
-                {   # Hidden gems
+                {  # Hidden gems
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 50,
                     'vote_average__gte': 7.5,
                     'with_original_language': 'en',
                     'page': 2  # Use different page to get less popular items
                 },
-                {   # Older classics
+                {  # Older classics
                     'sort_by': 'vote_average.desc',
                     'vote_count__gte': 300,
                     'first_air_date__gte': '1990-01-01',
@@ -237,7 +241,7 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
                     if results_list:
                         # Relaxed filtering criteria
                         filtered_results = [
-                            item for item in results_list 
+                            item for item in results_list
                             if item.popularity > 20 and item.vote_count >= 50
                         ]
                         # Take fewer results from each query to ensure diversity
@@ -257,21 +261,21 @@ def get_popular_by_genre(tmdb, genre, media_type='movie', include_adult=False):
         def get_score(item):
             # Reduced weight of popularity in scoring
             score = (item.vote_average * 0.5) + (min(item.popularity, 1000) / 1000 * 0.2)
-            
+
             # Increased weight of vote count but with diminishing returns
             vote_count_bonus = min(item.vote_count / 5000, 0.2)
             score += vote_count_bonus
-            
+
             try:
-                year = int(item.release_date.year if hasattr(item, 'release_date') else 
-                          item.first_air_date.year if hasattr(item, 'first_air_date') else 
-                          2000)
+                year = int(item.release_date.year if hasattr(item, 'release_date') else
+                           item.first_air_date.year if hasattr(item, 'first_air_date') else
+                           2000)
                 # Flatter recency curve to avoid too much recency bias
                 recency_bonus = ((year - 1990) / (current_year - 1990)) * 0.1
                 score += max(0, recency_bonus)
             except:
                 pass
-            
+
             return score
 
         sorted_results = sorted(unique_results, key=get_score, reverse=True)

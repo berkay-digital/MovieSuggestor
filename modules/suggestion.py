@@ -56,11 +56,32 @@ def reccomend_movie(title, platform):
         print("Invalid platform")
         return []
 
+    unique_recommendations = {}
+    
     if movie_id:
         print("Movie found")
         movie_details = get_movie_details(tmdb, movie_id)
         genres = movie_details['category']
         media_type = 'movie'
+
+        # Get similar movies
+        try:
+            similar_movies = tmdb.movie(movie_id).similar()
+            print(f"\nSimilar movies found: {len(similar_movies.results)}")
+            
+            # Sort similar movies by popularity
+            sorted_similar = sorted(similar_movies.results, key=lambda x: x.popularity, reverse=True)
+            
+            for item in sorted_similar[:5]:
+                if item.id != movie_id:
+                    print(f"Similar movie: {item.title} (ID: {item.id}, Popularity: {item.popularity})")
+                    unique_recommendations[item.id] = {
+                        'item': item,
+                        'matching_genres': 2,
+                        'score': calculate_recommendation_score(item, 2)
+                    }
+        except Exception as e:
+            print(f"Error getting similar movies: {str(e)}")
 
         genre_ids = []
         for genre in genres:
@@ -73,6 +94,25 @@ def reccomend_movie(title, platform):
         print("TV Show found")
         tv_details = get_tv_details(tmdb, tv_id)
         print(f"TV Details: {tv_details}")
+
+        # Get similar TV shows
+        try:
+            similar_shows = tmdb.tv(tv_id).similar()
+            print(f"\nSimilar TV shows found: {len(similar_shows.results)}")
+            
+            # Sort similar shows by popularity
+            sorted_similar = sorted(similar_shows.results, key=lambda x: x.popularity, reverse=True)
+            
+            for item in sorted_similar[:5]:
+                if item.id != tv_id:
+                    print(f"Similar TV show: {item.name} (ID: {item.id}, Popularity: {item.popularity})")
+                    unique_recommendations[item.id] = {
+                        'item': item,
+                        'matching_genres': 2,
+                        'score': calculate_recommendation_score(item, 2)
+                    }
+        except Exception as e:
+            print(f"Error getting similar TV shows: {str(e)}")
 
         genres = []
         if 'category' in tv_details and tv_details['category']:
@@ -91,58 +131,33 @@ def reccomend_movie(title, platform):
         print("No genres found")
         return []
 
-    unique_recommendations = {}
+    # Calculate how many more recommendations we need
+    remaining_slots = 10 - len(unique_recommendations)
+    recommendations_per_genre = max(2, remaining_slots // len(genres))
     
-    # First, get recommendations for individual genres
+    # Get recommendations for individual genres
     for genre_id in genres:
         try:
             genre_recommendations = get_popular_by_genre(tmdb, genre_id, media_type=media_type, include_adult=False)
             if genre_recommendations:
-                for item in genre_recommendations[:5]:  # Limit to top 5 from each genre
-                    if (media_type == 'movie' and item.id == movie_id) or \
-                       (media_type == 'tv' and item.id == tv_id):
-                        continue
-                    
-                    if item.id not in unique_recommendations:
+                added_from_genre = 0
+                for item in genre_recommendations:
+                    if added_from_genre >= recommendations_per_genre:
+                        break
+                        
+                    if item.id not in unique_recommendations and \
+                       ((media_type == 'movie' and item.id != movie_id) or \
+                        (media_type == 'tv' and item.id != tv_id)):
                         unique_recommendations[item.id] = {
                             'item': item,
                             'matching_genres': 1,
                             'score': calculate_recommendation_score(item, 1)
                         }
+                        added_from_genre += 1
 
         except Exception as e:
             print(f"Error getting popular {media_type} in genre {genre_id}: {str(e)}")
             continue
-
-    # Then, get recommendations that match multiple genres
-    if len(genres) > 1:
-        genre_combinations = [f"{genres[i]},{genres[j]}" 
-                            for i in range(len(genres)) 
-                            for j in range(i + 1, len(genres))]
-        
-        for genre_combo in genre_combinations:
-            try:
-                combo_recommendations = get_popular_by_genre(tmdb, genre_combo, media_type=media_type, include_adult=False)
-                if combo_recommendations:
-                    for item in combo_recommendations[:5]:  # Limit to top 5 from each combination
-                        if (media_type == 'movie' and item.id == movie_id) or \
-                           (media_type == 'tv' and item.id == tv_id):
-                            continue
-                        
-                        if item.id in unique_recommendations:
-                            # Update matching genres count and score for existing items
-                            unique_recommendations[item.id]['matching_genres'] = 2
-                            unique_recommendations[item.id]['score'] = calculate_recommendation_score(item, 2)
-                        else:
-                            unique_recommendations[item.id] = {
-                                'item': item,
-                                'matching_genres': 2,
-                                'score': calculate_recommendation_score(item, 2)
-                            }
-
-            except Exception as e:
-                print(f"Error getting popular {media_type} for genre combination {genre_combo}: {str(e)}")
-                continue
 
     # Sort recommendations by score
     sorted_recommendations = sorted(
@@ -151,8 +166,58 @@ def reccomend_movie(title, platform):
         reverse=True
     )
 
-    # Return only the items, maintaining the sorted order
-    return [rec['item'] for rec in sorted_recommendations[:10]]
+    print(f"\nTotal recommendations found: {len(sorted_recommendations)}")
+    
+    # Separate similar and genre-based recommendations
+    similar_recs = []
+    genre_recs = []
+    
+    for rec in sorted_recommendations:
+        if rec['matching_genres'] == 2:  # Similar content has matching_genres = 2
+            similar_recs.append(rec['item'])
+        else:
+            genre_recs.append(rec['item'])
+    
+    # Get top 5 from each category
+    similar_recs = similar_recs[:5]
+    genre_recs = genre_recs[:5]
+    
+    # If we don't have enough recommendations in either category, fill from the other
+    while len(similar_recs) + len(genre_recs) < 10:
+        if len(similar_recs) < 5 and len(genre_recs) > 5:
+            similar_recs.append(genre_recs.pop(5))
+        elif len(genre_recs) < 5 and len(similar_recs) > 5:
+            genre_recs.append(similar_recs.pop(5))
+        else:
+            # If we still need more recommendations, get them from popular
+            try:
+                if media_type == 'movie':
+                    popular = tmdb.movies().popular()
+                else:
+                    popular = tmdb.tv().popular()
+                
+                existing_ids = [r.id for r in similar_recs + genre_recs]
+                for item in popular.results:
+                    if len(similar_recs) + len(genre_recs) >= 10:
+                        break
+                    if item.id not in existing_ids:
+                        if len(similar_recs) < 5:
+                            similar_recs.append(item)
+                        else:
+                            genre_recs.append(item)
+            except Exception as e:
+                print(f"Error getting popular {media_type}: {str(e)}")
+            break
+
+    # Mix the recommendations
+    final_recommendations = []
+    for i in range(max(len(similar_recs), len(genre_recs))):
+        if i < len(similar_recs):
+            final_recommendations.append(similar_recs[i])
+        if i < len(genre_recs):
+            final_recommendations.append(genre_recs[i])
+            
+    return final_recommendations[:10]
 
 def calculate_recommendation_score(item, matching_genres):
     # Base score from rating (0-10)
