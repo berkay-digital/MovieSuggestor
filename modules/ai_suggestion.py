@@ -2,6 +2,7 @@ from g4f import ChatCompletion
 
 # Add more complexity to the AI suggestion
 # Improve the response
+# try to commit
 def get_ai_suggestion(user_input):
     response = ChatCompletion.create(
         model="gpt-4o",
