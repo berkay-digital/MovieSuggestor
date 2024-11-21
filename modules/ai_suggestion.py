@@ -2,26 +2,8 @@ from g4f import ChatCompletion
 import os
 from openai import OpenAI
 import time
-import signal
-from contextlib import contextmanager
-
-class TimeoutException(Exception):
-    pass
-
-@contextmanager
-def timeout(seconds):
-    def signal_handler(signum, frame):
-        raise TimeoutException("Timed out!")
-
-    # Set the signal handler and a timeout
-    signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(seconds)
-
-    try:
-        yield
-    finally:
-        # Disable the alarm
-        signal.alarm(0)
+import threading
+from queue import Queue
 
 def get_openai_suggestion(user_input, system_prompt):
     try:
@@ -31,33 +13,56 @@ def get_openai_suggestion(user_input, system_prompt):
         )
 
         chat_completion = client.chat.completions.create(
-            message=[
+            messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
             ],
-            model="gpt-4o-mini",
+            model="gpt-4",
         )
 
-        return chat_completion.coices[0].message.content
+        return chat_completion.choices[0].message.content
     except Exception as e:
         print(f"OpenAI error: {str(e)}")
         return None
 
+def g4f_worker(system_prompt, user_input, result_queue):
+    try:
+        response = ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ]
+        )
+        result_queue.put(response)
+    except Exception as e:
+        print(f"g4f error: {str(e)}")
+        result_queue.put(None)
+
 def get_g4f_suggestion(system_prompt, user_input):
     try:
         print("Using g4f (Free GPT-4)...")
-        with timeout(10): # 10 sec timeout setting
-            response = ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ],
-            )
-            return response
-    except TimeoutException:
-        print("G4f timed out after 10 seconds")
+        result_queue = Queue()
+        worker_thread = threading.Thread(
+            target=g4f_worker,
+            args=(system_prompt, user_input, result_queue)
+        )
+        worker_thread.daemon = True
+        worker_thread.start()
+        
+        # Wait for result with timeout
+        worker_thread.join(timeout=10)
+        
+        # If thread is still alive after timeout
+        if worker_thread.is_alive():
+            print("g4f timed out after 10 seconds")
+            return None
+            
+        # Get result if available
+        if not result_queue.empty():
+            return result_queue.get()
         return None
+        
     except Exception as e:
         print(f"g4f error: {str(e)}")
         return None
@@ -85,7 +90,6 @@ def get_ai_suggestion(user_input):
 Feel free to ask for more specific recommendations!"""
 
     return "I apologize, but I encountered an error while processing your request. Please try again."
-
 
 # You can run this file to test the AI suggestion
 if __name__ == "__main__":

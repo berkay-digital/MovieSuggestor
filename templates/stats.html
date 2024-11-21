@@ -40,29 +40,22 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Add title glow animation */
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 10px rgba(246, 211, 101, 0.5); }
+            100% { text-shadow: 0 0 20px rgba(253, 160, 133, 0.8), 0 0 30px rgba(246, 211, 101, 0.6); }
+        }
+
         h1 {
             font-family: 'Cinzel', serif;
             font-size: clamp(2rem, 5vw, 3.5rem);
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             background: linear-gradient(45deg, #f6d365, #fda085, #f6d365);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: titleGlow 3s ease-in-out infinite alternate;
-        }
-
-        .stats-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-5px);
+            text-align: center;
         }
 
         .stats-grid {
@@ -70,6 +63,25 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
         }
 
         .stat-value {
@@ -85,28 +97,48 @@
         }
 
         .table {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             overflow: hidden;
+            margin-bottom: 0;
+            backdrop-filter: blur(10px);
         }
 
         .table th {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(74, 32, 104, 0.3);
             border-color: rgba(255, 255, 255, 0.1);
             font-family: 'Cinzel', serif;
+            padding: 1.2rem 1rem;
+            font-weight: 600;
+            color: #f6d365;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
         }
 
         .table td {
             border-color: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            vertical-align: middle;
+            background: rgba(255, 255, 255, 0.02);
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .table tbody tr {
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(74, 32, 104, 0.2);
+            transform: translateX(5px);
+            box-shadow: inset 0 0 20px rgba(246, 211, 101, 0.1);
+            color: #ffffff;
+        }
+
+        .table tbody tr:last-child {
+            border-bottom: none;
         }
 
         .menu-btn {
@@ -193,6 +225,54 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .stats-card h3 {
+            font-family: 'Cinzel', serif;
+            color: #f6d365;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-responsive {
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(26, 11, 46, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Add footer styles */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            text-align: center;
+            z-index: 1;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #f6d365;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer a:hover {
+            color: #fda085;
+            transform: translateY(-2px);
+        }
+
+        .github-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
     </style>
 </head>
 <body>
@@ -230,19 +310,19 @@
 
         <div class="stats-grid">
             <div class="stats-card">
-                <div class="stat-value">{{ total_stats[0] }}</div>
+                <div class="stat-value">{{ total_stats.total_unique_titles }}</div>
                 <div class="stat-label">Total Unique Titles</div>
             </div>
             <div class="stats-card">
-                <div class="stat-value">{{ total_stats[1] }}</div>
+                <div class="stat-value">{{ total_stats.total_searches }}</div>
                 <div class="stat-label">Total Searches</div>
             </div>
             <div class="stats-card">
-                <div class="stat-value">{{ total_stats[2] }}</div>
+                <div class="stat-value">{{ total_stats.movie_titles }}</div>
                 <div class="stat-label">Movie Titles</div>
             </div>
             <div class="stats-card">
-                <div class="stat-value">{{ total_stats[3] }}</div>
+                <div class="stat-value">{{ total_stats.tv_show_titles }}</div>
                 <div class="stat-label">TV Show Titles</div>
             </div>
         </div>
@@ -301,6 +381,15 @@
             </div>
         </div>
     </div>
+
+    <footer class="footer">
+        <a href="https://github.com/berkay-digital/MovieSuggestor" target="_blank" rel="noopener noreferrer">
+            <svg class="github-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Open Source on GitHub
+        </a>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>

@@ -101,18 +101,23 @@ def get_details():
             'success': False,
             'message': str(e)
         })
-
 @app.route('/stats')
 def stats():
     top_searches = stats_tracker.get_top_searches(limit=10)
     recent_searches = stats_tracker.get_recent_searches(limit=10)
-    total_stats = stats_tracker.get_total_searches()
+    
+    # Use a dictionary for total_stats
+    total_stats = {
+        'total_unique_titles': stats_tracker.get_total_unique_titles(),
+        'total_searches': stats_tracker.get_total_searches(),
+        'movie_titles': stats_tracker.get_movie_titles(),
+        'tv_show_titles': stats_tracker.get_tv_show_titles()
+    }
     
     return render_template('stats.html', 
-                         top_searches=top_searches,
-                         recent_searches=recent_searches,
-                         total_stats=total_stats)
-
+                           top_searches=top_searches,
+                           recent_searches=recent_searches,
+                           total_stats=total_stats)
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
 

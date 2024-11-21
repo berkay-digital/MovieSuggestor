@@ -1,116 +1,136 @@
 import sqlite3
 from datetime import datetime
-from contextlib import contextmanager
+import os
 
 
 class StatsTracker:
-    def __init__(self, db_path="stats.db"):
-        self.db_path = db_path
-        self.__init__()
-
-    @contextmanager
-    def get_db(self):
-        conn = sqlite3.connect(self.db_path)
-        try:
-            yield conn
-        finally:
-            conn.close()
+    def __init__(self):
+        self.db_path = 'stats.db'
+        self._init_db()
 
     def _init_db(self):
-        with self.get_db() as conn:
-            cursor = conn.cursor()
+        # Create database directory if it doesn't exist
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir)
 
-            # Create searches table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS searches (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    media_type TEXT NOT NULL,
-                    search_count INTEGER DEFAULT 1,
-                    first_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        # Create the searches table if it doesn't exist
+        c.execute('''CREATE TABLE IF NOT EXISTS searches
+                    (title TEXT, 
+                     media_type TEXT, 
+                     count INTEGER DEFAULT 0, 
+                     first_searched TIMESTAMP,
+                     last_searched TIMESTAMP)''')
+        
+        # Add any indexes if needed
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_title_media 
+                    ON searches(title, media_type)''')
+        
+        conn.commit()
+        conn.close()
 
-            # Create index on title and media_type
-            cursor.execute('''
-                CREATE INDEX IF NOT EXISTS idx_title_media_type 
-                ON searches(title, media_type)
-            ''')
+    def _ensure_table_exists(self):
+        """Ensure the searches table exists before any operation"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        # Check if table exists
+        c.execute('''SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name='searches' ''')
+        
+        if not c.fetchone():
+            self._init_db()
+        
+        conn.close()
 
-            conn.commit()
-
-    def track_search(self, title: str, media_type: str):
-        with self.get_db() as conn:
-            cursor = conn.cursor()
-
-            # Try to update existing record
-            cursor.execute('''
-                UPDATE searches 
-                SET search_count = search_count + 1,
-                    last_searched = CURRENT_TIMESTAMP
-                WHERE title = ? AND media_type = ?
-            ''', (title, media_type))
-
-            # If no record was updates, insert new one
-            if cursor.rowcount == 0:
-                cursor.execute('''
-                INSERT INTO searches (title, media_type)
-                VALUES (?, ?)
-                ''', (title, media_type))
-
-            conn.commit()
-
-    def get_top_searches(self, limit: int = 10, media_type: str = None):
-        with self.get_db() as conn:
-            cursor = conn.cursor()
-
-            if media_type:
-                cursor.execute('''
-                    SELECT title, media_type, search_count, first_searched, last_searched
-                    FROM searches
-                    WHERE media_type = ?
-                    ORDER BY search_count DESC
-                    LIMIT ?
-                ''', (media_type, limit))
-
-            else:
-                cursor.execute('''
-                    SELECT title, media_type, search_count, first_searched, last_searched
-                    FROM searches
-                    ORDER BY search_count DESC
-                    LIMIT ?
-                ''', (limit,))
-
-            return cursor.fetchall()
+    def get_total_unique_titles(self):
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('SELECT COUNT(DISTINCT title) FROM searches')
+        count = c.fetchone()[0] or 0
+        conn.close()
+        return count
 
     def get_total_searches(self):
-        with self.get_db() as conn:
-            cursor = conn.cursor()
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('SELECT SUM(count) FROM searches')
+        count = c.fetchone()[0] or 0
+        conn.close()
+        return count
 
-            cursor.execute('''
-                SELECT
-                    COUNT(*) as total_titles,
-                    SUM(search_count) as total_searches,
-                    COUNT(CASE WHEN media_type = 'movie' THEN 1 END) as movie_titles,
-                    COUNT(CASE WHEN media_type = 'tv' THEN 1 END) as tv_titles,
-                    SUM(CASE WHEN media_type = 'movie' THEN search_count END) as movie_searches,
-                    SUM(CASE WHEN media_type = 'tv' THEN search_count END) as tv_searches
-                FROM searches
-            ''')
+    def get_movie_titles(self):
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM searches WHERE media_type = "movie"')
+        count = c.fetchone()[0] or 0
+        conn.close()
+        return count
 
-            return cursor.fetchall()
+    def get_tv_show_titles(self):
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM searches WHERE media_type = "tv"')
+        count = c.fetchone()[0] or 0
+        conn.close()
+        return count
 
-    def get_recent_searches(self, limit: int = 10):
-        with self.get_db() as conn:
-            cursor = conn.cursor()
+    def get_top_searches(self, limit=10):
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''SELECT title, media_type, count, first_searched, last_searched 
+                    FROM searches ORDER BY count DESC LIMIT ?''', (limit,))
+        results = c.fetchall() or []
+        conn.close()
+        return results
 
-            cursor.execute('''
-                SELECT title, media_type, search_count, first_searched, last_searched
-                FROM searches
-                ORDER BY last_searched DESC
-                LIMIT ?
-            ''', (limit,))
+    def get_recent_searches(self, limit=10):
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''SELECT title, media_type, count, first_searched, last_searched 
+                    FROM searches ORDER BY last_searched DESC LIMIT ?''', (limit,))
+        results = c.fetchall() or []
+        conn.close()
+        return results
 
-            return cursor.fetchall()
+    def track_search(self, title, media_type):
+        self._ensure_table_exists()
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        try:
+            # Check if title exists
+            c.execute('SELECT * FROM searches WHERE title = ? AND media_type = ?', 
+                     (title, media_type))
+            result = c.fetchone()
+            
+            if result:
+                # Update existing record
+                c.execute('''UPDATE searches 
+                            SET count = count + 1, last_searched = ? 
+                            WHERE title = ? AND media_type = ?''', 
+                         (now, title, media_type))
+            else:
+                # Insert new record
+                c.execute('''INSERT INTO searches 
+                            (title, media_type, count, first_searched, last_searched)
+                            VALUES (?, ?, 1, ?, ?)''', 
+                         (title, media_type, now, now))
+            
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
 
