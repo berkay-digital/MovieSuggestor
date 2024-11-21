@@ -89,7 +89,7 @@ def get_tv_details(tmdb: TMDb, tv_id: int):
 
 def get_genre_id(tmdb: TMDb, genre_name: str, media_type: str = 'movie'):
     """
-    function fpr for getting genre id as its required for api
+    function fpr for getting genre id as it's required for api
     returns genre id of movie or series
     """
     try:
